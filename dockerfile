@@ -49,16 +49,17 @@ RUN echo "memory_limit = -1" > /usr/local/etc/php/php.ini
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
-# add mautic components with composer
-RUN composer require symfony/amazon-sqs-messenger
-
 # Define Mautic version by package tag
 ARG MAUTIC_VERSION=5
 
-RUN cd /opt && \
-    COMPOSER_PROCESS_TIMEOUT=10000 composer create-project mautic/recommended-project:^${MAUTIC_VERSION} mautic --no-interaction && \
-    rm -rf /opt/mautic/var/cache/js && \
-    find /opt/mautic/node_modules -mindepth 1 -maxdepth 1 -not \( -name 'jquery' -or -name 'vimeo-froogaloop2' \) | xargs rm -rf
+WORKDIR /opt
+RUN COMPOSER_PROCESS_TIMEOUT=10000 composer create-project mautic/recommended-project:^${MAUTIC_VERSION} mautic --no-interaction --no-install
+WORKDIR /opt/mautic
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer require symfony/amazon-sqs-messenger
+
+# Cleanup
+RUN rm -rf mautic/var/cache/js && \
+    find mautic/node_modules -mindepth 1 -maxdepth 1 -not \( -name 'jquery' -or -name 'vimeo-froogaloop2' \) | xargs rm -rf
 
 FROM php:8.1-apache
 
@@ -113,9 +114,5 @@ VOLUME /var/www/html/docroot/media
 RUN chown -R www-data:www-data /var/www/html/config /var/www/html/var/logs /var/www/html/var/tmp /var/www/html/docroot/media
 
 WORKDIR /var/www/html/docroot
-
-ENV DOCKER_MAUTIC_ROLE=mautic_web \
-    DOCKER_MAUTIC_RUN_MIGRATIONS=false \
-    DOCKER_MAUTIC_LOAD_TEST_DATA=false
 
 CMD ["/entrypoint.sh"]
