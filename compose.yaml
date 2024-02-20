@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST?}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER?}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS?}
+    volumes: 
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - 5672:5672
+    networks:
+      - rabbitmq_mautic
+  
+  mautic_web:
+    build: .
+    restart: always
+    environment:
+      - MYSQL_HOST=${MYSQL_HOST?}
+      - MYSQL_PORT=${MYSQL_PORT?}
+      - MYSQL_USER=${MYSQL_USER?}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD?}
+      - MAUTIC_DB_NAME=${MAUTIC_DB_NAME?}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST?}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER?}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS?}
+      - MAUTIC_MESSENGER_DSN_EMAIL=${MAUTIC_MESSENGER_DSN_EMAIL?}
+      - MAUTIC_MESSENGER_DSN_HIT=${MAUTIC_MESSENGER_DSN_HIT?}
+    ports:
+      - 80:80
+    healthcheck:
+      test: curl http://localhost
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 100
+    networks:
+      - rabbitmq_mautic
+
+volumes:
+  rabbitmq-data:
+
+networks:
+  rabbitmq_mautic:
