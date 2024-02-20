@@ -37,18 +37,12 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nodejs \
     npm
 
-# Install AMQP for RabbitMQ
-RUN curl -L -o /tmp/amqp.tar.gz "https://github.com/php-amqp/php-amqp/archive/refs/tags/v2.1.2.tar.gz" \
-    && mkdir -p /usr/src/php/ext/amqp \
-    && tar -C /usr/src/php/ext/amqp -zxvf /tmp/amqp.tar.gz --strip 1 \
-    && rm /tmp/amqp.tar.gz
-
 # Enable PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-configure opcache --enable-opcache \
-    && docker-php-ext-install intl mbstring mysqli curl pdo_mysql zip bcmath sockets exif amqp gd imap opcache \
-    && docker-php-ext-enable intl mbstring mysqli curl pdo_mysql zip bcmath sockets exif amqp gd imap opcache
+    && docker-php-ext-install intl mbstring mysqli curl pdo_mysql zip bcmath sockets exif gd imap opcache \
+    && docker-php-ext-enable intl mbstring mysqli curl pdo_mysql zip bcmath sockets exif gd imap opcache
 
 RUN echo "memory_limit = -1" > /usr/local/etc/php/php.ini
 
