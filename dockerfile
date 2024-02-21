@@ -1,7 +1,7 @@
 FROM php:8.1-apache as builder
 
-LABEL vendor="CodersTrust"
-LABEL maintainer="Tanjim Hossain <tanjim.hossain@coderstrust.com>"
+LABEL vendor="NobinAlo"
+LABEL maintainer="Tanjim Hossain <tanjimhossain.pro@gmail.com>"
 
 # Install PHP extensions
 RUN apt-get update && apt-get install --no-install-recommends -y \
