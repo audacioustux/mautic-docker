@@ -51,7 +51,7 @@ BASH_ENV=/tmp/cron.env
 * * * * * php /var/www/html/bin/console mautic:segments:update 2>&1 | tee /tmp/cron.log
 * * * * * php /var/www/html/bin/console mautic:campaigns:update 2>&1 | tee /tmp/cron.log
 * * * * * php /var/www/html/bin/console mautic:campaigns:trigger 2>&1 | tee /tmp/cron.log
-* * * * * php /var/www/html/bin/console mautic:import --limit 500 2>&1 | tee /tmp/cron.log
+* * * * * php /var/www/html/bin/console mautic:import --limit 200 2>&1 | tee /tmp/cron.log
 EOF
 fi
 
