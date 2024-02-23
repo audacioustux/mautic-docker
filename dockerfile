@@ -52,16 +52,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin -
 # Define Mautic version by package tag
 ARG MAUTIC_VERSION=5
 
-WORKDIR /opt
-RUN COMPOSER_PROCESS_TIMEOUT=10000 composer create-project mautic/recommended-project:^${MAUTIC_VERSION} mautic --no-interaction --no-install
-WORKDIR /opt/mautic
-
-# Add additional composer packages here
-# e.g., RUN composer require symfony/amazon-sqs-messenger
-
-# Cleanup
-RUN rm -rf mautic/var/cache/js && \
-    find mautic/node_modules -mindepth 1 -maxdepth 1 -not \( -name 'jquery' -or -name 'vimeo-froogaloop2' \) | xargs rm -rf
+RUN cd /opt && \
+    COMPOSER_PROCESS_TIMEOUT=10000 composer create-project mautic/recommended-project:${MAUTIC_VERSION} mautic --no-interaction && \
+    rm -rf /opt/mautic/var/cache/js && \
+    find /opt/mautic/node_modules -mindepth 1 -maxdepth 1 -not \( -name 'jquery' -or -name 'vimeo-froogaloop2' \) | xargs rm -rf
 
 FROM php:8.1-apache
 
@@ -80,7 +74,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 # Setting PHP properties
 ENV PHP_INI_VALUE_DATE_TIMEZONE='UTC' \
-    PHP_INI_VALUE_MEMORY_LIMIT=1024M \
+    PHP_INI_VALUE_MEMORY_LIMIT=2048M \
     PHP_INI_VALUE_UPLOAD_MAX_FILESIZE=512M \
     PHP_INI_VALUE_POST_MAX_FILESIZE=512M \
     PHP_INI_VALUE_MAX_EXECUTION_TIME=1000
@@ -99,12 +93,10 @@ RUN a2enmod rewrite
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Define volume to persist data
+# Define Mautic volumes to persist data
 VOLUME /var/www/html/config
 VOLUME /var/www/html/var/logs
 VOLUME /var/www/html/docroot/media
-
-RUN chown -R www-data:www-data /var/www/html/config /var/www/html/var/logs /var/www/html/docroot/media
 
 WORKDIR /var/www/html/docroot
 
