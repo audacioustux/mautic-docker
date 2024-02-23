@@ -12,8 +12,8 @@ services:
       - MAUTIC_DB_NAME=${MAUTIC_DB_NAME?}
       # TODO: https://github.com/mautic/docker-mautic/pull/265
       # NOTE: change config/local.php for workaround
-      # - MAUTIC_MESSENGER_DSN_EMAIL=${MAUTIC_MESSENGER_DSN_EMAIL?}
-      # - MAUTIC_MESSENGER_DSN_HIT=${MAUTIC_MESSENGER_DSN_HIT?}
+      - MAUTIC_MESSENGER_DSN_EMAIL=${MAUTIC_MESSENGER_DSN_EMAIL?}
+      - MAUTIC_MESSENGER_DSN_HIT=${MAUTIC_MESSENGER_DSN_HIT?}
     ports:
       - 80:80
     healthcheck:

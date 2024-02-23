@@ -48,10 +48,19 @@ SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 BASH_ENV=/tmp/cron.env
 
-* * * * * php /var/www/html/bin/console mautic:segments:update 2>&1 | tee /tmp/cron.log
-* * * * * php /var/www/html/bin/console mautic:campaigns:update 2>&1 | tee /tmp/cron.log
-* * * * * php /var/www/html/bin/console mautic:campaigns:trigger 2>&1 | tee /tmp/cron.log
-* * * * * php /var/www/html/bin/console mautic:import --limit 200 2>&1 | tee /tmp/cron.log
+* * * * * php /var/www/html/bin/console mautic:segments:update --batch-limit=500 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+* * * * * php /var/www/html/bin/console mautic:campaigns:update --batch-limit=500 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+* * * * * php /var/www/html/bin/console mautic:campaigns:trigger --batch-limit=200 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/1 * * * * php /var/www/html/bin/console mautic:messages:send --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/2 * * * * php /var/www/html/bin/console mautic:broadcasts:send --limit 200 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/3 * * * * php /var/www/html/bin/console messenger:consume email --no-interaction --time-limit=180 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/3 * * * * php /var/www/html/bin/console messenger:consume hit --no-interaction --time-limit=180 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/3 * * * * php /var/www/html/bin/console messenger:consume failed --no-interaction --time-limit=180 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/5 * * * * php /var/www/html/bin/console mautic:import --limit 2000 --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/10 * * * * php /var/www/html/bin/console mautic:webhooks:process --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/10 * * * * php /var/www/html/bin/console mautic:integration:synccontacts --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/15 * * * * php /var/www/html/bin/console mautic:integration:pushactivity --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
+*/30 * * * * php /var/www/html/bin/console mautic:reports:scheduler --no-interaction --no-ansi 2>&1 | tee /tmp/cron.log
 EOF
 fi
 
@@ -84,9 +93,5 @@ cron-jobs(){
 	cron -f | tail -f /tmp/cron.log
 }
 
-worker(){
-	supervisord -c /etc/supervisor/conf.d/supervisord.conf
-}
-
 # run all the services in parallel
-parallel --halt now,fail=1 --linebuffer -j0 ::: 'web-server' 'wait-for-mautic && cron-jobs' 'wait-for-mautic && worker'
+parallel --halt now,fail=1 --linebuffer -j0 ::: 'web-server' 'wait-for-mautic && cron-jobs'

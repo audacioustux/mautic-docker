@@ -55,7 +55,9 @@ ARG MAUTIC_VERSION=5
 WORKDIR /opt
 RUN COMPOSER_PROCESS_TIMEOUT=10000 composer create-project mautic/recommended-project:^${MAUTIC_VERSION} mautic --no-interaction --no-install
 WORKDIR /opt/mautic
-RUN COMPOSER_ALLOW_SUPERUSER=1 composer require symfony/amazon-sqs-messenger
+
+# Add additional composer packages here
+# e.g., RUN composer require symfony/amazon-sqs-messenger
 
 # Cleanup
 RUN rm -rf mautic/var/cache/js && \
@@ -71,17 +73,17 @@ COPY --from=builder --chown=www-data:www-data /opt/mautic /var/www/html
 # Install PHP extensions requirements and other dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
     parallel unzip libwebp-dev libzip-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev libc-client-dev librabbitmq4 \
-    mariadb-client supervisor cron \
+    mariadb-client cron \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
     && rm -rf /var/lib/apt/lists/* \
     && rm /etc/cron.daily/*
 
 # Setting PHP properties
 ENV PHP_INI_VALUE_DATE_TIMEZONE='UTC' \
-    PHP_INI_VALUE_MEMORY_LIMIT=512M \
+    PHP_INI_VALUE_MEMORY_LIMIT=1024M \
     PHP_INI_VALUE_UPLOAD_MAX_FILESIZE=512M \
     PHP_INI_VALUE_POST_MAX_FILESIZE=512M \
-    PHP_INI_VALUE_MAX_EXECUTION_TIME=300
+    PHP_INI_VALUE_MAX_EXECUTION_TIME=1000
 
 COPY ./php.ini /usr/local/etc/php/php.ini
 
@@ -97,21 +99,12 @@ RUN a2enmod rewrite
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Setting worker env vars
-ENV DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL=2 \
-    DOCKER_MAUTIC_WORKERS_CONSUME_HIT=2 \
-    DOCKER_MAUTIC_WORKERS_CONSUME_FAILED=2
-
-COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-RUN mkdir -p /var/www/html/var/tmp
 # Define volume to persist data
 VOLUME /var/www/html/config
 VOLUME /var/www/html/var/logs
-VOLUME /var/www/html/var/tmp
 VOLUME /var/www/html/docroot/media
 
-RUN chown -R www-data:www-data /var/www/html/config /var/www/html/var/logs /var/www/html/var/tmp /var/www/html/docroot/media
+RUN chown -R www-data:www-data /var/www/html/config /var/www/html/var/logs /var/www/html/docroot/media
 
 WORKDIR /var/www/html/docroot
 
